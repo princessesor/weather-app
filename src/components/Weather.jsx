@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './Weather.css' 
 
 import clear_icon from '../assets/clear.png'
@@ -11,7 +11,8 @@ import snow_icon from '../assets/snow.png'
 import wind_icon from '../assets/wind.png'
 
 const Weather = () => {
-
+   
+  const inputRef = useRef()
    const[weatherData, setWeatherData] = useState(false);
 
    const allIcons = {
@@ -32,60 +33,87 @@ const Weather = () => {
    }
 
    const search = async(city)=>{
+    if(city === ""){
+      alert("Enter city name");
+      return;
+    }
+
     try{
-        const url=`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${import.meta.env.VITE_APP_ID}`;
-   
+        const url =`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${import.meta.env.VITE_APP_ID}`;
+
         const response = await fetch(url);
         const data = await response.json();
-       console.log(data);
-       const icon = allIcons[data.weather[0].icon] || clear_icon;
-       setWeatherData({
-        humidity: data.main.humidity,
-        windSpeed: data.wind.speed,
-        temperature: Math.floor(data.main.temp),
-        location: data.name,
-        icon: icon
-       })
-       
-      } catch (error) {
+        console.log(data);
 
-    }
-   }
+
+       if(!response.ok){
+        alert(data.message);
+        return;
+       }
+   
+    const dailyForecast = {};
+    data.list.forEach((item) => {
+      if (!item || !item.dt_txt) return; // skip if no date
+      const date = item.dt_txt.split(" ")[0]; //to get the date part only
+      if (!dailyForecast[date] && item.dt_txt.includes("12:00:00")) {
+        dailyForecast[date] = item;
+      }
+    });
+
+    const forecastArray = Object.values(dailyForecast).slice(0, 5); // get first five days
+
+    const processedData = forecastArray.map((day) => ({
+      date: day.dt_txt.split(" ")[0],
+      temp: Math.round(day.main.temp),
+      humidity: day.main.humidity,
+      windSpeed: day.wind.speed,
+      icon: allIcons[day.weather[0].icon] || clear_icon,
+      description: day.weather[0].main
+    }));
+
+    setWeatherData({
+      city: data.city.name,
+      forecast: processedData
+    });
+
+  } catch(error){
+    console.error("Error fetching forecast: ", error);
+    setWeatherData(false);
+  }
+ };
 
    useEffect(() => {
-     search("London");
+     search("Istanbul");
    }, [])
 
-  return (
+    return (
     <div className='weather'>
 
         <div className='search-bar'>
-            <input type='search' placeholder='Enter city'/> 
-            <img src={search_icon} alt='' />
+            <input ref={inputRef} type='search' placeholder='Enter city'/> 
+            <img src={search_icon} alt='' onClick={()=>search(inputRef.current.value)}/>
            </div>
 
-           <img src={clear_icon} alt="" className='weather_icon'/>
-           <p className='temperature'> {weatherData.temperature}'c</p>
-           <p className='location'> {weatherData.location}</p>
-
-           <div className="weather-data">
-           <div className="col">
-            <img src={humidity_icon} alt=""/>
-            <div>
-                <p> {weatherData.humidity}% </p>
-                <span> Humidity </span>
-             </div>
-           </div>
-           <div className="col">
-            <img src={wind_icon} alt=""/>
-            <div>
-                <p> {weatherData.windSpeed}km/hr </p>
-                <span> Wind speed </span>
-             </div>
-           </div>
-        </div>
-        </div>
-  )
+    { weatherData && (
+      <div className = "forecast-container">
+        <h2> 5-Day forecast for {weatherData.city} </h2>
+        <div className='forecast-grid'>
+          {weatherData.forecast.map((day, index) => (
+            <div className="forecast-card" key={index}> 
+              <p>{day.date}</p>
+              <img src={day.icon} alt={day.description} />
+              <p>{day.temp}°C</p>
+              <p>{day.humidity}% Humidity</p>
+              <p>{day.windSpeed} km/h Wind</p>
+              </div>
+          ))}
+      </div>
+      </div>
+    )
+  }
+</div> 
+)
 }
+
 
 export default Weather

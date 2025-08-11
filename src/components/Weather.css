@@ -70,3 +70,45 @@
     width: 30px;
     margin-top: 16px;
 }
+
+.forecast-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;      /* wrap cards to next line if screen is narrow */
+  justify-content: center;
+  padding: 10px;
+}
+
+.forecast-card {
+  background-color: lightsteelblue;    /* light background for cards */
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* subtle shadow */
+  padding: 20px;
+  width: 140px;                 /* fixed width for all cards */
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: transform 0.2s ease;
+  cursor: default;
+}
+
+.forecast-card:hover {
+  transform: translateY(-5px);  /* a little lift on hover */
+}
+
+.forecast-card img {
+  width: 60px;
+  height: 60px;
+  margin: 10px 0;
+}
+
+.forecast-card p {
+  margin: 6px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.forecast-card p:first-child {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #222;
+}
